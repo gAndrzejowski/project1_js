@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Editor</title>
+</head>
+<body>
+    <canvas width="600" height="300" id="studio"></canvas>
+    <button id="light">Light</button>
+    <button id="contrast">Contrast</button>
+    <button id="saturation">Saturation</button>
+
+    <script>
+        const canvas = document.getElementById('studio');
+        const ctx = canvas.getContext('2d');
+        let pixels;
+
+        let img = new Image();
+        img.src = "./img2.jpg";
+        img.addEventListener('load', () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            //pobierz dane pikseli i skopiuj do pixels
+            pixels = ctx.getImageData(0,0,canvas.width, canvas.height);
+        });
+        document.getElementById('light').addEventListener('click', () => {brightnessChange(30);});
+        document.getElementById('saturation').addEventListener('click', () => {saturationChange(0.3);});
+        document.getElementById('contrast').addEventListener('click', () => {contrastChange(0.3);});
+
+        function putNewData(data) {
+            pixels.data = data;
+            
+            ctx.putImageData(pixels, 0, 0);
+        }
+
+
+        function brightnessChange(factor) {
+
+            
+            let {data: nextData} = pixels;
+            
+            //zmodyfikuj wartości
+            for (let i=0; i<pixels.data.length; i+=4) {
+                nextData[i] += factor;
+                nextData[i+1] += factor;
+                nextData[i+2] += factor;
+            }
+
+            //wstaw z powrotem
+            putNewData(nextData);
+
+        }
+
+        function saturationChange(factor) {
+
+            let {data: nextData} = pixels;
+
+            let calculateNext = (val) => val + factor * (val - 128)
+
+            for (let i=0; i<pixels.data.length; i+=4) {
+                nextData[i] = calculateNext(nextData[i]);
+                nextData[i+1] = calculateNext(nextData[i+1]);
+                nextData[i+2] = calculateNext(nextData[i+2]);
+            }
+
+            putNewData(nextData);
+        
+
+        }
+
+        function contrastChange(factor) {
+
+            let {data: nextData} = pixels;
+
+            let calculateNext = (val, avg) => val + factor * (avg - 128)
+
+            for (let i=0; i<pixels.data.length; i+=4) {
+
+                const [r,g,b] = nextData.slice(i, 3);
+                const avg = (r+g+b)/3;
+
+                nextData[i] = calculateNext(nextData[i], avg);
+                nextData[i+1] = calculateNext(nextData[i+1], avg);
+                nextData[i+2] = calculateNext(nextData[i+2], avg);
+            }
+
+            putNewData(nextData);
+
+
+        }
+
+
+
+
+    </script>
+</body>
+</html>
